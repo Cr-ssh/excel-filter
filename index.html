@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Excel Viewer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+    <h1>Excel Viewer</h1>
+
+    <input type="file" id="excelFile" accept=".xlsx, .xls">
+    
+    <div id="sheetSelectContainer" style="display: none;">
+        <label for="sheetSelect">Select Sheet:</label>
+        <select id="sheetSelect"></select>
+    </div>
+
+    <input type="text" id="searchInput" placeholder="Search table..." style="display: none;">
+
+    <div id="tableContainer"></div>
+</div>
+
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script>
+let workbook;
+
+document.getElementById('excelFile').addEventListener('change', (e) => {
+    const reader = new FileReader();
+    const file = e.target.files[0];
+
+    reader.onload = function (event) {
+        const data = new Uint8Array(event.target.result);
+        workbook = XLSX.read(data, { type: 'array' });
+
+        const sheetSelect = document.getElementById('sheetSelect');
+        sheetSelect.innerHTML = '';
+        workbook.SheetNames.forEach(sheet => {
+            const option = document.createElement('option');
+            option.text = sheet;
+            option.value = sheet;
+            sheetSelect.appendChild(option);
+        });
+
+        document.getElementById('sheetSelectContainer').style.display = 'block';
+        document.getElementById('searchInput').style.display = 'block';
+        renderSheet(workbook.SheetNames[0]);
+    };
+
+    reader.readAsArrayBuffer(file);
+});
+
+document.getElementById('sheetSelect').addEventListener('change', (e) => {
+    renderSheet(e.target.value);
+});
+
+document.getElementById('searchInput').addEventListener('keyup', () => {
+    const filter = document.getElementById('searchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#excelTable tbody tr');
+
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(filter) ? '' : 'none';
+    });
+});
+
+function renderSheet(sheetName) {
+    const html = XLSX.utils.sheet_to_html(workbook.Sheets[sheetName], { id: 'excelTable' });
+    document.getElementById('tableContainer').innerHTML = html;
+}
+</script>
+</body>
+</html>
